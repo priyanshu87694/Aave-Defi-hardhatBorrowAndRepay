@@ -21,7 +21,11 @@ async function main () {
     const amountToBorrow = availableBorrowsETH.toString() * 0.95 * (1/daiPrice.toNumber())
     console.log(`Borrow Possible: ${amountToBorrow}`)
     const amountToBorrowWei = ethers.utils.parseEther(amountToBorrow.toString())
-    await borrowDAI("0x6B175474E89094C44Da98b954EedeAC495271d0F", lendingPool, amountToBorrowWei, deployer)
+    const daiTokenAddress = "0x6B175474E89094C44Da98b954EedeAC495271d0F"
+    await borrowDAI(daiTokenAddress, lendingPool, amountToBorrowWei, deployer)
+    await getBorrowUserData(lendingPool, deployer)
+    // repay
+    await repayDAI(amountToBorrowWei, daiTokenAddress, lendingPool, deployer)
     await getBorrowUserData(lendingPool, deployer)
 }
 
@@ -67,6 +71,13 @@ async function borrowDAI(daiTokenAddress, lendingPool, amountToBorrowWei, accoun
     const borrowTx = await lendingPool.borrow(daiTokenAddress, amountToBorrowWei, 1, 0, account)
     await borrowTx.wait(1)
     console.log("Borrowed DAI")
+}
+
+async function repayDAI(amount, daiTokenAddress, lendingPool, account) {
+    await approveERC20(daiTokenAddress, lendingPool.address, amount, account)
+    const repayTx = await lendingPool.repay(daiTokenAddress, amount, 1, account)
+    await repayTx.wait(1)
+    console.log("Repayed!")
 }
 
 main ()
